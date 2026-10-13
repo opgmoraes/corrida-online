@@ -25,13 +25,13 @@ Servidor Node.js com quatro salas privadas, painel e overlay responsivo. Cada sa
 
 O Render Free pode suspender o serviço após inatividade. Antes da live, abra o painel e confira a conexão; o primeiro carregamento pode demorar. Não há garantia de detectar uma live enquanto o serviço estiver suspenso.
 
-O filesystem gratuito é temporário. As configurações em data/salaN.json podem desaparecer quando o serviço reiniciar/republicar. O painel guarda uma cópia no navegador após salvar e oferece Restaurar backup deste navegador se detectar perda no servidor. Também permite baixar/importar JSON. Para recuperar após perda, abra seu painel e restaure o backup. A corrida atual, votos e vitórias ficam em memória e zeram ao reiniciar.
+O filesystem gratuito é temporário. As configurações em data/salaN.json podem desaparecer quando o serviço reiniciar/republicar. O painel guarda uma cópia no navegador após salvar e oferece Restaurar backup deste navegador para recuperar sua configuração. Também permite baixar/importar JSON. Para recuperar após perda, abra seu painel e restaure o backup. A corrida atual, votos e vitórias ficam em memória e zeram ao reiniciar.
 
 Guarde o backup fora do site. Esta versão não inclui um banco durável. Não use os limites de gratuitos como promessa de serviço permanente aos compradores.
 
 ## Segurança dos acessos
 
-- Link /s/... controla uma sala; link /o/... só mostra a corrida.
+- Link /s/... controla uma sala; link /o/... só mostra o jogo.
 - Uma chave de sala não abre outra sala. API exige origem correta e token próprio para alterações.
 - Chaves são derivadas de APP_SECRET e não estão embutidas no código.
 - Guardar links privados equivale a guardar credenciais de acesso. Eles não devem aparecer na imagem transmitida. Não compartilhe o link do painel com espectadores.
@@ -51,7 +51,7 @@ O adaptador usa tiktok-live-connector 2.5.0, biblioteca não oficial com depend�
 
 ## Verificação
 
-npm test: 15 testes, incluindo regras, normalização dos eventos e fluxo HTTP/SSE com quatro salas, presente isolado, chaves incorretas, escopo de leitura, origem e restauração após reinício com disco preservado. O navegador desta ferramenta não alcançou localhost; inspeção visual e teste de live real continuam pendentes.
+npm test: 26 testes de corrida, combate, migração, conector e servidor. A conexão com uma live TikTok ativa ainda exige validação.
 
 ## Segundo jogo: combate
 

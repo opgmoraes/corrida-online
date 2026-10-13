@@ -28,10 +28,12 @@ const hosts = new Set([...origins].map(o => new URL(o).host));
 const derive = (id, scope) => crypto.createHmac('sha256', secret).update(`corrida-v04:${id}:${scope}`).digest('hex');
 const equal = (a, b) => { const x = Buffer.from(String(a || '')), y = Buffer.from(String(b)); return x.length === y.length && crypto.timingSafeEqual(x, y); };
 const rooms = new Map();
+const initialConfigs=JSON.parse(process.env.INITIAL_CONFIGS||'{}');
 for (let i = 1; i <= 4; i++) {
   const id = `sala${i}`, file = path.join(dataDir, `${id}.json`);
   let config = validateConfig(defaults), saved = false;
   if (fs.existsSync(file)) { config = validateConfig(JSON.parse(fs.readFileSync(file, 'utf8'))); saved = true; }
+  else if(initialConfigs[id]?.saved){config=validateConfig(initialConfigs[id].config);saved=true;}
   rooms.set(id, { id, file, config, saved, engine: new Engine(config), clients: new Map(), busy: false });
   rooms.get(id).adapter = new TikTokAdapter(rooms.get(id).engine);
 }
@@ -53,7 +55,7 @@ const server = http.createServer(async (req, res) => {
     if (!hosts.has(req.headers.host)) return json(res, 403, { error: 'Host inválido' });
     const origin = cloudURL ? new URL(cloudURL).origin : `http://${req.headers.host}`;
     const route = new URL(req.url, origin).pathname;
-    if (req.method === 'GET' && route === '/health') return json(res, 200, { ok: true, version: '0.4.0' });
+    if (req.method === 'GET' && route === '/health') return json(res, 200, { ok: true, version: '0.5.0' });
     if (req.method === 'GET' && route === '/api/admin') {
       if (!equal(req.headers['x-admin-key'], secret)) return json(res, 401, { error: 'Chave de administrador inválida' });
       return json(res, 200, { rooms: [...rooms.values()].map(r => ({ id: r.id, username: r.config.username, ...links(r, origin) })) });
@@ -81,12 +83,12 @@ const server = http.createServer(async (req, res) => {
           if (next.username && [...rooms.values()].some(r => r !== room && r.config.username.toLowerCase() === next.username.toLowerCase())) return json(res, 409, { error: 'Essa conta TikTok já está configurada em outra sala' });
           fs.writeFileSync(room.file + '.tmp', JSON.stringify(next, null, 2)); fs.renameSync(room.file + '.tmp', room.file);
           const changed = room.config.username !== next.username; room.config = next; room.saved = true; room.engine.configure(next);
-          if (changed || room.engine.demo) await room.adapter.watch(next.username);
+          if (changed) await room.adapter.watch(next.username);
           return json(res, 200, { ok: true, pending: room.engine.pending !== null });
         }
         if (tail === 'api/watch') { await room.adapter.watch(room.config.username); return json(res, 200, { ok: true }); }
         if (tail === 'api/demo') { await room.adapter.stop(); room.engine.setDemo(!!payload.enabled); return json(res, 200, { ok: true }); }
-        if (tail === 'api/test') { if (!room.engine.demo) return json(res, 409, { error: 'Ative o teste primeiro' }); return json(res, 200, { ok: room.engine.accept({ ...payload, id: crypto.randomUUID(), user: 'teste-local' }) }); }
+        if (tail === 'api/test') { if (!room.engine.demo) return json(res, 409, { error: 'Ative o teste primeiro' }); if(payload.type==='combatBonus')return json(res,200,{ok:room.engine.testCombatBonus(payload.action)});return json(res, 200, { ok: room.engine.accept({ ...payload, id: crypto.randomUUID(), user: 'teste-local' }) }); }
         return json(res, 404, { error: 'Não encontrado' });
       } finally { room.busy = false; }
     }
@@ -104,6 +106,6 @@ const tick = setInterval(() => {
   for (const room of rooms.values()) { room.engine.tick(dt); for (const [res, scope] of room.clients) { if (res.writableLength > 1000000) { room.clients.delete(res); res.destroy(); } else res.write(`data: ${JSON.stringify(state(room, scope))}\n\n`); } }
 }, 200);
 server.on('error', error => { console.error(error.code === 'EADDRINUSE' ? 'Porta ocupada. Feche outra instância.' : error.message); process.exit(1); });
-server.listen(port, production ? '0.0.0.0' : '127.0.0.1', () => { console.log(`Corrida Online 0.4 pronta na porta ${port}. 4 salas privadas.`); if (!production) console.log(`Painel http://127.0.0.1:${port} • chave administrativa em data/admin-key.txt`); for (const room of rooms.values()) room.adapter.watch(room.config.username); });
+server.listen(port, production ? '0.0.0.0' : '127.0.0.1', () => { console.log(`Arena Studio 0.5 pronta na porta ${port}. 4 salas privadas.`); if (!production) console.log(`Painel http://127.0.0.1:${port} • chave administrativa em data/admin-key.txt`); for (const room of rooms.values()) room.adapter.watch(room.config.username); });
 async function shutdown() { clearInterval(tick); for (const room of rooms.values()) { for (const res of room.clients.keys()) res.end(); await room.adapter.stop(); } server.close(() => process.exit(0)); setTimeout(() => process.exit(0), 5000).unref(); }
 process.on('SIGINT', shutdown); process.on('SIGTERM', shutdown);

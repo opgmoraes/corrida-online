@@ -1,4 +1,4 @@
-# Corrida Online 0.4 — você e até três amigos
+# Corrida Online 0.5 — você e até três amigos
 
 Servidor Node.js com quatro salas privadas, painel e overlay responsivo. Cada sala tem conexão TikTok, corrida, placar e configurações separados. A tela de transmissão tem uma chave somente de leitura. O código está preparado para Render Free; esta preparação não confirma uma publicação.
 
@@ -52,3 +52,7 @@ O adaptador usa tiktok-live-connector 2.5.0, biblioteca não oficial com depend�
 ## Verificação
 
 npm test: 15 testes, incluindo regras, normalização dos eventos e fluxo HTTP/SSE com quatro salas, presente isolado, chaves incorretas, escopo de leitura, origem e restauração após reinício com disco preservado. O navegador desta ferramenta não alcançou localhost; inspeção visual e teste de live real continuam pendentes.
+
+## Segundo jogo: combate
+
+O painel agora oferece Corrida e Combate dos presidentes. Consulte [COMBATE.md](COMBATE.md) para regras e uso. Ambos usam a mesma conexão e URL de transmissão; a mudança entra na próxima rodada.

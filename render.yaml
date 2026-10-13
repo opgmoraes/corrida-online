@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: corrida-online
+    runtime: node
+    plan: free
+    buildCommand: npm ci --omit=dev
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: 24.13.1
+      - key: APP_SECRET
+        generateValue: true
